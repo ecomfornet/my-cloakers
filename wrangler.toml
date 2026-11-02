@@ -1,0 +1,8 @@
+name = "homeandrecipe-cloaker"
+main = "src/index.js"
+compatibility_date = "2026-10-31"
+
+routes = [
+  { pattern = "homeandrecipe.com/*", zone_name = "homeandrecipe.com" },
+  { pattern = "www.homeandrecipe.com/*", zone_name = "homeandrecipe.com" }
+]

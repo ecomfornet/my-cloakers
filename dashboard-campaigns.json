@@ -1,0 +1,42 @@
+[
+  {
+    "id": "challenger-campaign",
+    "name": "Challenger Campaign",
+    "safeUrl": "https://example.com/safe",
+    "moneyUrl": "https://example.com/money",
+    "status": "active",
+    "createdAt": "2026-11-01T12:22:06.086Z"
+  },
+  {
+    "id": "test-campaign",
+    "name": "Test Campaign",
+    "safeUrl": "https://safe.com",
+    "moneyUrl": "https://offer.com",
+    "status": "active",
+    "createdAt": "2026-11-01T12:21:26.411Z"
+  },
+  {
+    "id": "test-campaign",
+    "name": "Test Campaign",
+    "safeUrl": "https://safe.com",
+    "moneyUrl": "https://money.com",
+    "status": "active",
+    "createdAt": "2026-11-01T12:20:40.968Z"
+  },
+  {
+    "id": "homeandrecipe-com-cloaker",
+    "sourceDomain": "homeandrecipe.com",
+    "targetDomain": "https://asqstyle.com",
+    "workerName": "homeandrecipe-com-cloaker",
+    "activationMethod": "visitor_threshold",
+    "triggerCondition": "both",
+    "scrollPct": 15,
+    "thresholdCount": 8,
+    "routes": [
+      "homeandrecipe.com/*",
+      "www.homeandrecipe.com/*"
+    ],
+    "deployedAt": "2026-11-01T18:14:11.243Z",
+    "status": "active"
+  }
+]

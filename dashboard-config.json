@@ -1,0 +1,10 @@
+{
+  "apiToken": "cfoat_T6bJ9j6ujDfyhT98LGXdA2gy2CeSFJh7_h69iRUbg6A.IqnXsOdBiuN6MBX-UmjovSvxJ1NJ4E4CA2VHOQSjmog",
+  "accountId": "7dc0e6c5b46881fec4f36bad5ac438a4",
+  "d1DatabaseId": "7db29aa9-bd12-410d-a982-1600c940a14f",
+  "activationMethod": "visitor_threshold",
+  "defaultScrollPct": 15,
+  "defaultTrigger": "both",
+  "thresholdCount": 8,
+  "autoCreateWww": true
+}
